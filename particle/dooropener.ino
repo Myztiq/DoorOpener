@@ -1,31 +1,31 @@
 int RELAY1 = D3;
-int BUZZER = D1;
+int BUZZER = A1;
 bool openOnBuzz = false;
 
 void setup()
 {
-    Serial.begin(9600);
-    pinMode(RELAY1, OUTPUT);
-    pinMode(BUZZER, INPUT_PULLDOWN);
-    digitalWrite(RELAY1, LOW);
+  Serial.begin(9600);
+  pinMode(RELAY1, OUTPUT);
+  digitalWrite(RELAY1, LOW);
 
-    Particle.function("openDoor", openDoor);
-    Particle.function("openOnBuzz", openOnNextBuzz);
+  Particle.variable("openOnBuzz", false);
+  Particle.function("openDoor", openDoor);
+  Particle.function("openOnBuzz", toggleOpenOnNextBuzz);
 }
 void loop()
 {
-    // if (openOnBuzz) {
-    //     if (digitalRead(BUZZER) == HIGH) {
-    //         openOnBuzz = false;
-    //         openDoor("");
-    //     }
-    // }
+  if (openOnBuzz && analogRead(BUZZER) > 4000) {
+    Particle.variable("openOnBuzz", false);
+    openOnBuzz = false;
+    openDoor("");
+  }
 }
 
 int openDoor(String data)
 {
+  Particle.publish("openDoor called");
   digitalWrite(RELAY1, HIGH);
-  int time = 10000;
+  int time = 4000;
   if (data.length() > 0) {
       time = atoi(data);
   }
@@ -34,9 +34,24 @@ int openDoor(String data)
   return 1;
 }
 
-
-int openOnNextBuzz(String data)
+void unsetOpenOnNextBuzz()
 {
+  Particle.publish("unsetOpenOnNextBuzz called");
+  if (openOnBuzz) {
+    toggleOpenOnNextBuzz("");
+  }
+}
+Timer resetOpenOnBuzz(3 * 1000 * 60, unsetOpenOnNextBuzz, true);
+
+int toggleOpenOnNextBuzz(String data)
+{
+  Particle.publish("toggleOpenOnNextBuzz called");
+  if (openOnBuzz) {
+    openOnBuzz = false;
+  } else {
+    resetOpenOnBuzz.reset();
     openOnBuzz = true;
-    return 1;
+  }
+  Particle.variable("openOnBuzz", openOnBuzz);
+  return 1;
 }
