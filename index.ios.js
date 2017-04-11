@@ -12,6 +12,7 @@ import {
   AppRegistry,
   TextInput,
   StyleSheet,
+  StatusBar,
   Text,
   Switch,
   View,
@@ -249,6 +250,9 @@ export default class DoorOpener extends Component {
     }
 
     return <View style={pageStyles}>
+      <StatusBar
+        barStyle='light-content'
+      />
       {content}
     </View>;
   }
