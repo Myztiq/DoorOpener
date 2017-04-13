@@ -37,21 +37,26 @@ int openDoor(String data)
 void unsetOpenOnNextBuzz()
 {
   Particle.publish("unsetOpenOnNextBuzz called");
-  if (openOnBuzz) {
-    toggleOpenOnNextBuzz("");
-  }
+  openOnBuzz = false;
+  Particle.variable("openOnBuzz", openOnBuzz);
 }
+
+void setOpenOnNextBuzz()
+{
+  Particle.publish("setOpenOnNextBuzz called");
+  openOnBuzz = true;
+  Particle.variable("openOnBuzz", openOnBuzz);
+}
+
 Timer resetOpenOnBuzz(3 * 1000 * 60, unsetOpenOnNextBuzz, true);
 
 int toggleOpenOnNextBuzz(String data)
 {
   Particle.publish("toggleOpenOnNextBuzz called");
   if (openOnBuzz) {
-    openOnBuzz = false;
+    unsetOpenOnNextBuzz();
   } else {
-    resetOpenOnBuzz.reset();
-    openOnBuzz = true;
+    setOpenOnNextBuzz();
   }
-  Particle.variable("openOnBuzz", openOnBuzz);
   return 1;
 }
