@@ -14,10 +14,12 @@ import {
   StyleSheet,
   StatusBar,
   Text,
+  Picker,
   Switch,
   View,
   Button
 } from 'react-native';
+const Item = Picker.Item;
 
 export default class DoorOpener extends Component {
   constructor (props) {
@@ -27,19 +29,28 @@ export default class DoorOpener extends Component {
       particleId: null,
       loading: true,
       error: null,
-      saved: false
+      saved: false,
+      openDuration: 4
     };
   }
 
   openDoor = () => {
-    window.fetch(`https://api.particle.io/v1/devices/${this.state.particleId}/openDoor?access_token=${this.state.accessToken}&arg=1000`, {
-      method: 'POST'
+    window.fetch(`https://api.particle.io/v1/devices/${this.state.particleId}/openDoor`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: `access_token=${encodeURIComponent(this.state.accessToken)}&args=${this.state.openDuration * 1000}`
     })
   }
 
   openOnNextBuzz = () => {
-    window.fetch(`https://api.particle.io/v1/devices/${this.state.particleId}/openOnBuzz?access_token=${this.state.accessToken}&arg=1000`, {
-      method: 'POST'
+    window.fetch(`https://api.particle.io/v1/devices/${this.state.particleId}/openOnBuzz`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: `access_token=${encodeURIComponent(this.state.accessToken)}&args=${this.state.openDuration * 1000}`
     })
       .then(() => {
         this.setState({
@@ -74,7 +85,7 @@ export default class DoorOpener extends Component {
   }
 
   componentDidMount () {
-    AsyncStorage.multiGet(['accessToken', 'particleId', 'saved'])
+    AsyncStorage.multiGet(['accessToken', 'particleId', 'saved', 'openDuration'])
       .then((values) => {
         newState = values.reduce((tmpState = {}, value) => {
           tmpState[value[0]] = value[1]
@@ -84,7 +95,8 @@ export default class DoorOpener extends Component {
           accessToken: newState.accessToken,
           particleId: newState.particleId,
           loading: false,
-          saved: newState.saved === 'true'
+          saved: newState.saved === 'true',
+          openDuration: newState.openDuration ? parseInt(newState.openDuration, 10) : 4
         });
         if (this.state.accessToken && this.state.particleId) {
           this.updateNextBuzzStatus()
@@ -106,7 +118,8 @@ export default class DoorOpener extends Component {
         [
           ['accessToken', this.state.accessToken],
           ['particleId', this.state.particleId],
-          ['saved', 'true']
+          ['saved', 'true'],
+          ['openDuration', this.state.openDuration + '']
         ]
       )
         .then(() => {
@@ -212,6 +225,25 @@ export default class DoorOpener extends Component {
         value={this.state.particleId}
         placeholder='Particle ID'
       />
+      <Text style={styles.welcomeText}>Open Duration</Text>
+      <Picker
+        selectedValue={this.state.openDuration}
+        onValueChange={(openDuration) => this.setState({openDuration})}
+      >
+        <Item label="1 second" value={1} />
+        <Item label="2 seconds" value={2} />
+        <Item label="3 seconds" value={3} />
+        <Item label="4 seconds" value={4} />
+        <Item label="5 seconds" value={5} />
+        <Item label="6 seconds" value={6} />
+        <Item label="7 seconds" value={7} />
+        <Item label="8 seconds" value={8} />
+        <Item label="9 seconds" value={9} />
+        <Item label="10 seconds" value={10} />
+        <Item label="15 seconds" value={15} />
+        <Item label="20 seconds" value={20} />
+        <Item label="30 seconds" value={30} />
+      </Picker>
       <View style={{marginTop: 20}}>
         <Icon.Button
           name='check'
