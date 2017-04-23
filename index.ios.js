@@ -53,9 +53,6 @@ export default class DoorOpener extends Component {
       body: `access_token=${encodeURIComponent(this.state.accessToken)}&args=${this.state.openDuration * 1000}`
     })
       .then(() => {
-        this.setState({
-          openOnNextBuzzActive: !this.state.openOnNextBuzzActive
-        })
         this.pollForNextBuzzStatus()
       })
   }

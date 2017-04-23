@@ -9,15 +9,14 @@ void setup()
   pinMode(RELAY1, OUTPUT);
   digitalWrite(RELAY1, LOW);
 
-  Particle.variable("openOnBuzz", false);
+  Particle.variable("openOnBuzz", openOnBuzz);
   Particle.function("openDoor", openDoor);
   Particle.function("openOnBuzz", toggleOpenOnNextBuzz);
 }
 void loop()
 {
   if (openOnBuzz && analogRead(BUZZER) > 4000) {
-    Particle.variable("openOnBuzz", false);
-    openOnBuzz = false;
+    unsetOpenOnNextBuzz();
     openDoor(buzzDuration);
   }
 }
@@ -25,6 +24,8 @@ void loop()
 int openDoor(String data)
 {
   Particle.publish("openDoor called");
+  openOnBuzz = false;
+  Particle.variable("openOnBuzz", openOnBuzz);
   int time = 4000;
   if (data.length() > 0) {
     time = atoi(data);
@@ -34,6 +35,8 @@ int openDoor(String data)
   digitalWrite(RELAY1, LOW);
   return 1;
 }
+
+Timer resetOpenOnBuzz(1000 * 60 * 3, unsetOpenOnNextBuzz, true);
 
 void unsetOpenOnNextBuzz()
 {
@@ -45,12 +48,10 @@ void unsetOpenOnNextBuzz()
 void setOpenOnNextBuzz(String data)
 {
   Particle.publish("setOpenOnNextBuzz called", data);
-  Particle.publish(data);
+  resetOpenOnBuzz.reset();
   openOnBuzz = true;
   Particle.variable("openOnBuzz", openOnBuzz);
 }
-
-Timer resetOpenOnBuzz(3 * 1000 * 60, unsetOpenOnNextBuzz, true);
 
 int toggleOpenOnNextBuzz(String data)
 {
