@@ -1,24 +1,43 @@
 int RELAY1 = D3;
 int BUZZER = A1;
+int SPEAKER = A5;
 bool openOnBuzz = false;
 String buzzDuration = "4000";
+bool ringingDoorbell = false;
+bool buzzing = false;
+int volume = 70;
 
 void setup()
 {
   Serial.begin(9600);
   pinMode(RELAY1, OUTPUT);
+  pinMode(SPEAKER, OUTPUT);
   digitalWrite(RELAY1, LOW);
 
   Particle.variable("openOnBuzz", openOnBuzz);
   Particle.function("openDoor", openDoor);
   Particle.function("openOnBuzz", toggleOpenOnNextBuzz);
+
 }
+
 void loop()
 {
-  if (openOnBuzz && analogRead(BUZZER) > 4000) {
-    unsetOpenOnNextBuzz();
-    openDoor(buzzDuration);
+  if (analogRead(BUZZER) > 4000) {
+    if (openOnBuzz) {
+      unsetOpenOnNextBuzz();
+      openDoor(buzzDuration);
+    } else {
+      if (!ringingDoorbell) {
+        Particle.publish("doorbell");
+      }
+      analogWrite(SPEAKER, volume);
+      ringingDoorbell = true;
+    }
+  } else {
+    analogWrite(SPEAKER, 0);
+    ringingDoorbell = false;
   }
+
 }
 
 int openDoor(String data)
@@ -42,6 +61,7 @@ void unsetOpenOnNextBuzz()
 {
   Particle.publish("unsetOpenOnNextBuzz called");
   openOnBuzz = false;
+  buzzDuration = "4000";
   Particle.variable("openOnBuzz", openOnBuzz);
 }
 
@@ -50,6 +70,7 @@ void setOpenOnNextBuzz(String data)
   Particle.publish("setOpenOnNextBuzz called", data);
   resetOpenOnBuzz.reset();
   openOnBuzz = true;
+  buzzDuration = data;
   Particle.variable("openOnBuzz", openOnBuzz);
 }
 
